@@ -1,5 +1,5 @@
 #[derive(Clone)]
-struct SSLNode<T> {
+pub struct SSLNode<T> {
     value: T,
     next: Option<Box<SSLNode<T>>>,
 }
@@ -13,6 +13,10 @@ where
             value: value,
             next: next,
         }
+    }
+
+    pub fn get_value(&self) -> &T {
+        &self.value
     }
 }
 
@@ -30,6 +34,10 @@ where
             head: None,
             length: 0,
         }
+    }
+
+    pub fn get_length(&self) -> i32 {
+        self.length
     }
 
     pub fn push_front(&mut self, value: T) {
@@ -56,9 +64,56 @@ where
         self.length += 1;
     }
 
+    pub fn pop_front(&mut self) -> Option<Box<SSLNode<T>>> {
+        let next = match self.head.as_mut() {
+            Some(head) => {
+                let cur = head;
+                self.length -= 1;
+                cur.next.take()
+            }
+            None => None,
+        };
+        let node = self.head.take();
+        self.head = next;
+        node
+    }
+
+    pub fn pop_back(&mut self) -> Option<Box<SSLNode<T>>> {
+        if self.length == 1 {
+            let node = self.head.take();
+            self.head = None;
+            self.length = 0;
+            node
+        } else {
+            match self.head.as_mut() {
+                Some(head) => {
+                    let mut cur = head;
+
+                    while cur.next.is_some() {
+                        if let Some(next) = cur.next.as_mut() {
+                            if next.next.is_none() {
+                                break;
+                            }
+                        }
+                        cur = cur.next.as_mut().unwrap();
+                    }
+                    let node = cur.next.take();
+                    cur.next = None;
+                    self.length -= 1;
+                    node
+                }
+                None => None,
+            }
+        }
+    }
+
+    pub fn drop(&mut self) {
+        self.head = None;
+        self.length = 0;
+    }
+
     pub fn print(&self) {
         if let Some(head) = &self.head {
-            println!("length: {}", self.length);
             Self::print_from_node(&mut head.clone());
         }
     }
@@ -71,5 +126,6 @@ where
             print!("->{}", next.value.to_string());
             cur = next;
         }
+        println!("");
     }
 }
